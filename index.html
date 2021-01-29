@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width" />
+    <title>GUI</title>
+    <script>
+      const socket = new WebSocket('ws://' + location.hostname + ':1300'),
+      fns = ['getVoltage', 'getCurrent','getSetVoltage', 'getSetCurrent', 'getCapacity', 'getTime', 'getOutputState'];
+      let updating_blocked = false;
+      // socket.addEventListener('message', e => console.log("recieved", e));
+      async function cmd(...args){
+        let resolve_listener;
+        const result = await new Promise(resolve => {
+          resolve_listener = event => {
+            // console.log("resolving because of", event);
+            resolve(JSON.parse(event.data));
+          }
+          socket.addEventListener('message', resolve_listener);
+          socket.send(JSON.stringify(args));
+        });
+        socket.removeEventListener('message', resolve_listener);
+        return result;
+      }
+      window.addEventListener("load", init);
+      async function init(){
+        fns.forEach(fn => {
+          if(!document.querySelector("." + fn)){
+            var div = document.createElement("div");
+            div.id = fn;
+            document.body.append(div);
+          }
+        });
+        document.querySelector("#controls").style.display = "";
+        document.querySelectorAll("input").forEach(input => {
+          input.addEventListener("change", stuffchanges);
+          input.addEventListener("input", stuffchanges);
+        });
+        socket.addEventListener('open', function (event) {
+          console.log("connection opened", event);
+          setInterval(update, 1000);
+        });
+      }
+      async function update(){
+        if(updating_blocked){
+          return;
+        }
+        for(let i = 0; i < fns.length; i++){
+          const fn = fns[i],
+          result = await cmd(fn);
+          let element;
+          if(element = document.querySelector("." + fn)){
+            if(element.type == "checkbox"){
+              element.checked = result ? true : false;
+            } else {
+              element.value = result;
+            }
+          } else {
+            document.getElementById(fn).innerText = fn + ": " + result;
+          }
+        }
+      }
+      async function stuffchanges(event){
+        updating_blocked = true;
+        const el = event.currentTarget,
+        fn = el.name,
+        value = el.type == "checkbox" ? el.checked : el.value;
+        await cmd(fn, value);
+        updating_blocked = false;
+      }
+    </script>
+    <style type="text/css">
+    body {
+      background: black;
+      color: white;
+      font-size: 20pt;
+      font-family: ubuntu;
+    }
+    </style>
+  </head>
+  <body>
+    <div id="controls">
+      <label><input type="checkbox" class="getOutputState" name="output">Output on</label><br />
+      <label><input type="number" min="0" max="60" name="setVoltage" class="getSetVoltage">Voltage</label><br />
+      <label><input type="number" min="0" max="8" name="setCurrent" class="getSetCurrent">Current</label>
+    </div>
+  </body>
+</html>
