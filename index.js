@@ -163,7 +163,7 @@ export class DCDC {
     }
     return catchify(async () => {
       await new Promise(r => this.#serial.open(r));
-      catchify(this.#datareader)();
+      catchify(this.#datareader.bind(this))();
       return this;
     })()
   }
