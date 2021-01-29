@@ -1,0 +1,21 @@
+{
+  "name": "dcdc-lib",
+  "version": "1.0.0",
+  "description": "Library for DCDC modules with UART",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Daniel Torger",
+  "license": "MIT",
+  "dependencies": {
+    "bufferutil": "^4.0.3",
+    "raspi-serial": "^6.0.0",
+    "ws": "^7.4.2"
+  },
+  "type": "module",
+  "optionalDependencies": {
+    "bufferutil": "^4.0.3",
+    "utf-8-validate": "^5.0.4"
+  }
+}
