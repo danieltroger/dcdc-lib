@@ -5,7 +5,7 @@ const err = (...args) => console.log(...args),
 catchify = t => function() {
     try {
         const e = t.apply(this, arguments);
-        return e && "function" == typeof e?.catch ? e?.catch?.(err) : e;
+        return e && "function" == typeof e.catch ? e.catch(err) : e;
     } catch (t) {
         err(t)
     }
