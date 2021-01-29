@@ -1,11 +1,22 @@
 import { init } from 'raspi';
 import { Serial } from 'raspi-serial';
 
+const err = (...args) => console.log(...args),
+catchify = t => function() {
+    try {
+        const e = t.apply(this, arguments);
+        return e && "function" == typeof e?.catch ? e?.catch?.(err) : e;
+    } catch (t) {
+        err(t)
+    }
+}
+
+
 export class DCDC {
   #serial;
   #prefix;
 
-  #promise_object = infinite_promise_creator();
+  #promise_object = catchify(infinite_promise_creator)();
 
   #last_send_time = new Date().getTime();
   #delay_between_cmds = 12;
@@ -34,7 +45,7 @@ export class DCDC {
     return reversed_string_array.reverse().join("");
   }
   async #readResult(){
-    return await this.#promise_object.stack[this.#promise_object.stack.length-1];
+    return await this.#promise_object.promise;
   }
   async setVoltage(volts){
     if(volts < 0 || volts > 60){
@@ -42,35 +53,35 @@ export class DCDC {
     }
     const centivolts = volts * 100,
     paddedValue = this.#padLeft(centivolts);
-    await this.#sendCommand("wu" + paddedValue);
-    const answer = await this.#readResult();
+    await this.#sendCommand("wu" + paddedValue).catch(err);
+    const answer = await this.#readResult().catch(err);
     // console.log("answer read in setvoltage:", answer);
     return answer === "#wuok";
   }
   async getSetVoltage(){ // Volts
-    return await this.#queryNumeric("rv");
+    return await this.#queryNumeric("rv").catch(err);
   }
   async getVoltage(){ // Volts
-    return await this.#queryNumeric("ru");
+    return await this.#queryNumeric("ru").catch(err);
   }
   async getCurrent(){ // Amperes
-    return await this.#queryNumeric("ri");
+    return await this.#queryNumeric("ri").catch(err);
   }
   async getSetCurrent(){ // Amperes
-    return await this.#queryNumeric("ra");
+    return await this.#queryNumeric("ra").catch(err);
   }
   async getCapacity(){ // Ampere Hours
-    return await this.#queryNumeric("rc", 100);
+    return await this.#queryNumeric("rc", 100).catch(err);
   }
   async getTime(){ // Minutes
-    return await this.#queryNumeric("rc", 1);
+    return await this.#queryNumeric("rc", 1).catch(err);
   }
   async getOutputState(){ // Boolean
-    return await this.#queryNumeric("ro", 1);
+    return await this.#queryNumeric("ro", 1).catch(err);
   }
   async #queryNumeric(cmd, divideby){
-    await this.#sendCommand(cmd);
-    const answer = await this.#readResult();
+    await this.#sendCommand(cmd).catch(err);
+    const answer = await this.#readResult().catch(err);
     // console.log("answer recieved in queryNumeric:", answer);
     if(answer.substr(0,3) === "#" + cmd){
       return parseInt(answer.substr(3, answer.length)) / (divideby ? divideby : 100);
@@ -82,8 +93,8 @@ export class DCDC {
     volts = +volts;
     const centivolts = volts * 100,
     paddedValue = this.#padLeft(centivolts);
-    await this.#sendCommand("wu" + paddedValue);
-    const answer = await this.#readResult();
+    await this.#sendCommand("wu" + paddedValue).catch(err);
+    const answer = await this.#readResult().catch(err);
     // console.log("answer read in setvoltage:", answer);
     return answer === "#wuok";
   }
@@ -94,8 +105,8 @@ export class DCDC {
     }
     const centiamps = amps * 100,
     paddedValue = this.#padLeft(centiamps);
-    await this.#sendCommand("wi" + paddedValue);
-    const answer = await this.#readResult();
+    await this.#sendCommand("wi" + paddedValue).catch(err);
+    const answer = await this.#readResult().catch(err);
     // console.log("answer read in setcurrent:", answer);
     return answer === "#wiok";
   }
@@ -106,8 +117,8 @@ export class DCDC {
     } else {
       cmd = "wo0";
     }
-    await this.#sendCommand(cmd);
-    const answer = await this.#readResult();
+    await this.#sendCommand(cmd).catch(err);
+    const answer = await this.#readResult().catch(err);
     // console.log("answer read in output:", answer);
     return answer === "#wook";
   }
@@ -118,14 +129,14 @@ export class DCDC {
     } else {
       cmd = "wy0";
     }
-    await this.#sendCommand(cmd);
-    const answer = await this.#readResult();
+    await this.#sendCommand(cmd).catch(err);
+    const answer = await this.#readResult().catch(err);
     // console.log("answer read in output:", answer);
     return answer === "#wyok";
   }
   async #datareader(){
     let buffer = "";
-    this.#serial.on('data', (data) => {
+    this.#serial.on('data', catchify((data) => {
       data = data.toString();
       //console.log("got data", data);
       const divided = (buffer + data).split("\r\n");
@@ -138,17 +149,21 @@ export class DCDC {
       } else {
         buffer += data;
       }
-    });
+    }));
   }
   constructor (options) {
     const {baudRate, prefix, portId} = options;
     this.#prefix = prefix;
-    this.#serial = new Serial({
-      baudRate, portId
-    });
-    return (async () => {
+    try {
+      this.#serial = new Serial({
+        baudRate, portId
+      });
+    } catch(e){
+      err(e);
+    }
+    return catchify(async () => {
       await new Promise(r => this.#serial.open(r));
-      this.#datareader();
+      catchify(this.#datareader)();
       return this;
     })()
   }
@@ -177,14 +192,15 @@ export class DCDC {
 //     process.stdout.write("set: " + set_voltage + " actual: " + actual_voltage + "\r");
 //   }
 // }
-function infinite_promise_creator(){
-  const cart_promise_object = {stack: [], internal_resolve: (a) => {}, resolve: (a) => {}};
-  cart_promise_object.resolve = (argument) => {
-    const oldresolve = cart_promise_object.internal_resolve;
-    const newlength = cart_promise_object.stack.push(new Promise(r => cart_promise_object.internal_resolve = r));
-    cart_promise_object.stack.splice(0, newlength-1);
-    oldresolve(argument);
-  };
-  cart_promise_object.stack = [new Promise(r => cart_promise_object.internal_resolve = r)];
-  return cart_promise_object;
+function infinite_promise_creator() {
+    let t;
+    const e = {
+        promise: new Promise(e => t = e),
+        internal_resolve: t,
+        resolve: t => {
+            const n = e.internal_resolve;
+            e.promise = new Promise(t => e.internal_resolve = t), n(t)
+        },
+    };
+    return e
 }
