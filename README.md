@@ -4,9 +4,9 @@ Library written in nodejs to interface with uart dcdc converters.
 
 Recommended to be used on a raspberry pi zero w, here's a link to modern nodejs for it (all other sources offer ancient versions which won't run this), please select the newest version from this directory: https://unofficial-builds.nodejs.org/download/release/
 
-compatible buck converters:
+### compatible buck converters:
 
-400w buck/step down converter:
+**400w buck/step down converter:**
 https://www.droking.com/400W-NC-Voltage-Regulator-Power-Supply-Module-DC-6-65V-to-0-60V-8A-Buck-Adapter-Charger-Voltmeter-Ammeter-Capacity-Meter-Time-Meter
 
 The same module on ebay (I got a black one like the one pictured in droking): https://www.ebay.de/itm/Adjustable-400W-CC-CV-DC-DC-Step-down-Converter-Power-Supply-Module-Led-Driver/182257124080
@@ -21,7 +21,7 @@ const dcdc_regulator = await new DCDC({
   });
 ```
 
-720w buck/step down converter:
+**720w buck/step down converter:**
 https://www.droking.com/Power-Supply-Module-DC10V-75V-to-0-60V-12A-720W-Buck-Converter-Voltage-regulator-CNC-Control-Module-DC-12V-24V-36V-48V-Adapter
 
 On ebay (I got one with green PCB):
@@ -36,7 +36,7 @@ const dcdc_regulator = await new DCDC({
   });
 ```
 
-Methods of the class:
+## Methods of the class:
 * setVoltage
 * getSetVoltage
 * getVoltage (gets actual outputted voltage, example: `const actual_voltage = await dcdc_regulator.getVoltage()`)
