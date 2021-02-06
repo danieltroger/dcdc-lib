@@ -6,7 +6,7 @@ compatible buck converters:
 400w buck/step down converter:
 https://www.droking.com/400W-NC-Voltage-Regulator-Power-Supply-Module-DC-6-65V-to-0-60V-8A-Buck-Adapter-Charger-Voltmeter-Ammeter-Capacity-Meter-Time-Meter
 
-The same module on ebay (I got the black one picture in droking): https://www.ebay.de/itm/Adjustable-400W-CC-CV-DC-DC-Step-down-Converter-Power-Supply-Module-Led-Driver/182257124080
+The same module on ebay (I got a black one like the one pictured in droking): https://www.ebay.de/itm/Adjustable-400W-CC-CV-DC-DC-Step-down-Converter-Power-Supply-Module-Led-Driver/182257124080
 
 Usage example:
 ```
