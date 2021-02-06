@@ -2,7 +2,7 @@
 
 Library written in nodejs to interface with uart dcdc converters.
 
-Recommended to be used on a raspberry pi zero w, here's a link to modern nodejs for it (all other sources offer ancient versions which won't run this), please select the newest version from this directory: https://unofficial-builds.nodejs.org/download/release/
+Recommended to be used on a raspberry pi zero w, here's a link to modern nodejs for it (all other sources offer ancient versions which won't run this), please select the newest "linux-armv6l" version from this directory: https://unofficial-builds.nodejs.org/download/release/
 
 ### compatible buck converters:
 
